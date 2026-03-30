@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PINSTUDIO">
+<title>📸 PINSTUDIO ガチャ</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Noto+Sans+JP:wght@300;400;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #faf8f5;
+    --warm-white: #fff9f2;
+    --blush: #f7e8e0;
+    --rose: #e8b4a0;
+    --deep-rose: #c47c63;
+    --terracotta: #a85c45;
+    --charcoal: #2a2420;
+    --warm-gray: #7a6e6a;
+    --light-gray: #e8e2dd;
+    --gold: #d4a85a;
+    --gold-light: #f0cf8a;
+    --win-color: #e85d75;
+    --lose-color: #7a6e6a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--cream);
+    color: var(--charcoal);
+    touch-action: manipulation;
+  }
+
+  /* ── BACKGROUND TEXTURE ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(247,232,224,0.8) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(212,168,90,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 60% 40%, rgba(232,180,160,0.25) 0%, transparent 45%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  #app {
+    position: relative; z-index: 1;
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 20px;
+    gap: 28px;
+  }
+
+  /* ── HEADER ── */
+  #header {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 4px;
+    user-select: none;
+  }
+
+  #logo {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 6vw, 42px);
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    color: var(--charcoal);
+    cursor: pointer;
+    position: relative;
+  }
+
+  #logo span {
+    color: var(--deep-rose);
+  }
+
+  #logo-sub {
+    font-size: clamp(9px, 1.8vw, 11px);
+    letter-spacing: 0.35em;
+    color: var(--warm-gray);
+    font-weight: 300;
+    text-transform: uppercase;
+  }
+
+  /* ── CAPSULE MACHINE ── */
+  #machine-wrap {
+    position: relative;
+    display: flex; flex-direction: column;
+    align-items: center;
+  }
+
+  #machine-svg {
+    width: clamp(200px, 45vw, 320px);
+    height: auto;
+    filter: drop-shadow(0 8px 32px rgba(42,36,32,0.12));
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+
+  #machine-svg:active { transform: scale(0.97); }
+
+  /* ── CAPSULE SPIN ANIMATION ── */
+  /* Handled via Web Animations API in JS for cross-browser SVG support */
+
+  /* ── TAP HINT ── */
+  #tap-hint {
+    margin-top: 14px;
+    font-size: clamp(11px, 2.5vw, 13px);
+    letter-spacing: 0.2em;
+    color: var(--warm-gray);
+    font-weight: 300;
+    text-transform: uppercase;
+    animation: blink 2.5s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  /* ── RESULT DISPLAY ── */
+  #result-panel {
+    width: clamp(260px, 80vw, 420px);
+    height: 90px;
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  #result-box {
+    width: 100%; height: 100%;
+    border-radius: 16px;
+    background: var(--warm-white);
+    border: 1.5px solid var(--light-gray);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 4px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    overflow: hidden;
+    position: relative;
+  }
+
+  #result-box.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  #result-box.win {
+    background: linear-gradient(135deg, #fff0f3 0%, #ffe8d6 100%);
+    border-color: var(--rose);
+  }
+
+  #result-box.lose {
+    background: var(--warm-white);
+    border-color: var(--light-gray);
+  }
+
+  #result-label {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(26px, 6vw, 38px);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .win #result-label  { color: var(--win-color); }
+  .lose #result-label { color: var(--lose-color); }
+
+  #result-sub {
+    font-size: clamp(10px, 2vw, 12px);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 300;
+  }
+
+  .win #result-sub  { color: var(--deep-rose); }
+  .lose #result-sub { color: var(--warm-gray); }
+
+  /* ── STATS BAR ── */
+  #stats-bar {
+    display: flex;
+    gap: 12px;
+  }
+
+  .stat-pill {
+    background: var(--warm-white);
+    border: 1.5px solid var(--light-gray);
+    border-radius: 50px;
+    padding: 8px 18px;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 1px;
+  }
+
+  .stat-label {
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--warm-gray);
+    font-weight: 400;
+  }
+
+  .stat-value {
+    font-family: 'DM Mono', monospace;
+    font-size: clamp(16px, 3.5vw, 20px);
+    font-weight: 500;
+    color: var(--charcoal);
+  }
+
+  .stat-value.warn { color: var(--win-color); }
+
+  /* ── CONFETTI ── */
+  #confetti-canvas {
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 100;
+  }
+
+  /* ── ADMIN PANEL ── */
+  #admin-overlay {
+    position: fixed; inset: 0;
+    background: rgba(42,36,32,0.55);
+    backdrop-filter: blur(6px);
+    z-index: 200;
+    display: none;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+
+  #admin-overlay.open { display: flex; }
+
+  #admin-panel {
+    background: var(--warm-white);
+    border-radius: 24px;
+    width: min(480px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 64px rgba(42,36,32,0.25);
+    padding: 32px;
+    display: flex; flex-direction: column; gap: 24px;
+  }
+
+  .admin-header {
+    display: flex; align-items: center;
+    justify-content: space-between;
+  }
+
+  .admin-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--charcoal);
+  }
+
+  #admin-close {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--light-gray);
+    border: none; cursor: pointer;
+    font-size: 18px; line-height: 36px;
+    text-align: center; color: var(--charcoal);
+    transition: background 0.2s;
+  }
+  #admin-close:hover { background: var(--rose); }
+
+  .admin-section {
+    display: flex; flex-direction: column; gap: 14px;
+  }
+
+  .admin-section-title {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--warm-gray);
+    font-weight: 400;
+    border-bottom: 1px solid var(--light-gray);
+    padding-bottom: 8px;
+  }
+
+  .field-row {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+
+  .field-row label {
+    font-size: 12px;
+    color: var(--warm-gray);
+    font-weight: 400;
+    letter-spacing: 0.05em;
+  }
+
+  .field-row input[type="number"] {
+    background: var(--cream);
+    border: 1.5px solid var(--light-gray);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    color: var(--charcoal);
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .field-row input[type="number"]:focus {
+    border-color: var(--rose);
+  }
+
+  .stats-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .stat-card {
+    background: var(--cream);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+
+  .stat-card-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--warm-gray);
+  }
+
+  .stat-card-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--charcoal);
+  }
+
+  .btn-row {
+    display: flex; gap: 10px;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: var(--deep-rose);
+    color: white;
+  }
+  .btn-primary:hover { background: var(--terracotta); }
+
+  .btn-ghost {
+    background: var(--light-gray);
+    color: var(--charcoal);
+  }
+  .btn-ghost:hover { background: var(--rose); }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--win-color);
+    border: 1.5px solid var(--win-color);
+  }
+  .btn-danger:hover { background: var(--win-color); color: white; }
+
+  .admin-note {
+    font-size: 11px;
+    color: var(--warm-gray);
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* ── INVENTORY WARNING ── */
+  #sold-out-badge {
+    position: absolute;
+    top: -12px; right: -12px;
+    background: var(--charcoal);
+    color: var(--cream);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 50px;
+    display: none;
+  }
+
+  #sold-out-badge.visible { display: block; }
+
+  /* ── WIN FLASH ── */
+  @keyframes winFlash {
+    0%, 100% { box-shadow: 0 0 0 rgba(232,93,117,0); }
+    50% { box-shadow: 0 0 40px rgba(232,93,117,0.4); }
+  }
+
+  .win-flash { animation: winFlash 0.6s ease 3; }
+
+  /* ── DECORATIVE DOTS ── */
+  .deco-dots {
+    position: fixed;
+    width: 120px; height: 120px;
+    pointer-events: none; z-index: 0;
+    opacity: 0.12;
+  }
+  .deco-dots.tl { top: -20px; left: -20px; }
+  .deco-dots.br { bottom: -20px; right: -20px; transform: rotate(180deg); }
+
+  /* ── SOLD OUT STATE ── */
+  #machine-svg.sold-out { opacity: 0.45; cursor: not-allowed; }
+  #machine-svg.sold-out:active { transform: none; }
+
+  #sold-out-overlay {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -60%);
+    background: var(--charcoal);
+    color: var(--cream);
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(15px, 3.5vw, 20px);
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 10px 26px;
+    border-radius: 50px;
+    pointer-events: none;
+    display: none;
+    white-space: nowrap;
+  }
+  #sold-out-overlay.visible { display: block; }
+
+  /* ── COOLDOWN BAR ── */
+  #cooldown-bar-wrap {
+    width: clamp(200px, 45vw, 320px);
+    height: 4px;
+    background: var(--light-gray);
+    border-radius: 4px;
+    margin-top: 8px;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  #cooldown-bar-wrap.active { opacity: 1; }
+
+  #cooldown-bar {
+    height: 100%;
+    width: 100%;
+    background: var(--deep-rose);
+    border-radius: 4px;
+    transform-origin: left;
+    transition: transform 0.1s linear;
+  }
+
+  /* ── PIN MODAL ── */
+  #pin-overlay {
+    position: fixed; inset: 0;
+    background: rgba(42,36,32,0.6);
+    backdrop-filter: blur(8px);
+    z-index: 300;
+    display: none;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  #pin-overlay.open { display: flex; }
+
+  #pin-panel {
+    background: var(--warm-white);
+    border-radius: 24px;
+    width: min(360px, 100%);
+    padding: 36px 32px 28px;
+    box-shadow: 0 24px 64px rgba(42,36,32,0.25);
+    display: flex; flex-direction: column;
+    align-items: center; gap: 20px;
+  }
+
+  #pin-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; font-weight: 700;
+    color: var(--charcoal);
+  }
+
+  #pin-subtitle {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--warm-gray);
+    margin-top: -12px;
+    text-align: center;
+  }
+
+  #pin-dots {
+    display: flex; gap: 14px;
+  }
+
+  .pin-dot {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--light-gray);
+    transition: background 0.15s;
+  }
+  .pin-dot.filled { background: var(--deep-rose); }
+
+  #pin-keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    width: 100%;
+  }
+
+  .pin-key {
+    background: var(--cream);
+    border: 1.5px solid var(--light-gray);
+    border-radius: 14px;
+    padding: 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--charcoal);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .pin-key:active, .pin-key:hover { background: var(--blush); border-color: var(--rose); }
+  .pin-key.del { font-size: 16px; color: var(--warm-gray); }
+  .pin-key.zero { grid-column: 2; }
+
+  #pin-error {
+    font-size: 12px;
+    color: var(--win-color);
+    letter-spacing: 0.05em;
+    min-height: 18px;
+  }
+
+  #pin-cancel {
+    font-size: 12px;
+    color: var(--warm-gray);
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    background: none; border: none;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  /* ── STOCK REFILL ── */
+  .refill-row {
+    display: flex; gap: 10px; align-items: flex-end;
+  }
+  .refill-row .field-row { flex: 1; }
+  .btn-refill {
+    flex-shrink: 0;
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: 1.5px solid var(--deep-rose);
+    background: transparent;
+    color: var(--deep-rose);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .btn-refill:hover { background: var(--deep-rose); color: white; }
+
+  /* ── ACTUAL WIN RATE ── */
+  .stat-card.highlight .stat-card-value { color: var(--deep-rose); }
+</style>
+</head>
+<body>
+
+<!-- Decorative SVG dots -->
+<svg class="deco-dots tl" viewBox="0 0 120 120" fill="none">
+  <circle cx="20" cy="20" r="4" fill="#c47c63"/>
+  <circle cx="50" cy="20" r="4" fill="#c47c63"/>
+  <circle cx="80" cy="20" r="4" fill="#c47c63"/>
+  <circle cx="20" cy="50" r="4" fill="#c47c63"/>
+  <circle cx="50" cy="50" r="4" fill="#c47c63"/>
+  <circle cx="20" cy="80" r="4" fill="#c47c63"/>
+</svg>
+<svg class="deco-dots br" viewBox="0 0 120 120" fill="none">
+  <circle cx="20" cy="20" r="4" fill="#c47c63"/>
+  <circle cx="50" cy="20" r="4" fill="#c47c63"/>
+  <circle cx="80" cy="20" r="4" fill="#c47c63"/>
+  <circle cx="20" cy="50" r="4" fill="#c47c63"/>
+  <circle cx="50" cy="50" r="4" fill="#c47c63"/>
+  <circle cx="20" cy="80" r="4" fill="#c47c63"/>
+</svg>
+
+<canvas id="confetti-canvas"></canvas>
+
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="header">
+    <div id="logo" onclick="handleLogoTap()">📸 PIN<span>STUDIO</span></div>
+    <div id="logo-sub">Photo Studio Gacha</div>
+  </div>
+
+  <!-- CAPSULE MACHINE SVG -->
+  <div id="machine-wrap">
+    <svg id="machine-svg" viewBox="0 0 320 360" xmlns="http://www.w3.org/2000/svg" onclick="handleGachaTap()">
+      <!-- Machine body base -->
+      <rect x="40" y="200" width="240" height="140" rx="16" fill="#e8e2dd"/>
+      <rect x="50" y="210" width="220" height="120" rx="12" fill="#f5f0eb"/>
+
+      <!-- Machine legs -->
+      <rect x="80" y="330" width="30" height="30" rx="6" fill="#d4cec9"/>
+      <rect x="210" y="330" width="30" height="30" rx="6" fill="#d4cec9"/>
+
+      <!-- Globe outer -->
+      <circle cx="160" cy="145" r="110" fill="#e8e2dd"/>
+      <circle cx="160" cy="145" r="105" fill="url(#globeGrad)"/>
+
+      <!-- Globe glass shine -->
+      <circle cx="160" cy="145" r="105" fill="none" stroke="white" stroke-width="3" opacity="0.5"/>
+      <ellipse cx="130" cy="105" rx="28" ry="18" fill="white" opacity="0.15" transform="rotate(-20,130,105)"/>
+
+      <!-- Camera (animated) — PINSTUDIO shooting motif -->
+      <g id="capsule-group">
+        <g transform="translate(160,145)">
+
+          <!-- Shadow -->
+          <ellipse cx="0" cy="72" rx="52" ry="9" fill="#2a2420" opacity="0.10"/>
+
+          <!-- Body -->
+          <rect x="-58" y="-32" width="116" height="74" rx="12" fill="#2a2420"/>
+          <rect x="-52" y="-26" width="104" height="62" rx="9" fill="#3a3028"/>
+
+          <!-- Viewfinder bump (top left) -->
+          <rect x="-52" y="-48" width="34" height="20" rx="6" fill="#2a2420"/>
+          <rect x="-48" y="-44" width="26" height="14" rx="4" fill="#3a3028"/>
+
+          <!-- Lens outer ring -->
+          <circle cx="8" cy="5" r="30" fill="#2a2420" stroke="#c47c63" stroke-width="3.5"/>
+          <!-- Lens mid ring -->
+          <circle cx="8" cy="5" r="22" fill="#1a1614" stroke="#a85c45" stroke-width="2"/>
+          <!-- Lens inner -->
+          <circle cx="8" cy="5" r="13" fill="#0d0b0a"/>
+          <!-- Lens deep -->
+          <circle cx="8" cy="5" r="7" fill="#1a1614"/>
+          <!-- Lens reflection -->
+          <ellipse cx="1" cy="-2" rx="6" ry="4" fill="white" opacity="0.16" transform="rotate(-20,1,-2)"/>
+          <circle cx="14" cy="10" r="2" fill="white" opacity="0.10"/>
+
+          <!-- Shutter button -->
+          <circle cx="42" cy="-32" r="8" fill="#c47c63" stroke="#a85c45" stroke-width="1.5"/>
+          <circle cx="42" cy="-32" r="4" fill="#d4957e"/>
+
+          <!-- Strap lugs -->
+          <rect x="-64" y="-14" width="9" height="12" rx="3" fill="#4a3c34"/>
+          <rect x="55" y="-14" width="9" height="12" rx="3" fill="#4a3c34"/>
+
+          <!-- Mode dial (top right) -->
+          <circle cx="30" cy="-40" r="10" fill="#4a3c34" stroke="#3a3028" stroke-width="1"/>
+          <circle cx="30" cy="-40" r="5" fill="#2a2420"/>
+          <line x1="30" y1="-50" x2="30" y2="-44" stroke="#c47c63" stroke-width="2" stroke-linecap="round"/>
+
+        </g>
+      </g>
+
+      <!-- Machine front plate -->
+      <rect x="100" y="215" width="120" height="60" rx="10" fill="white" opacity="0.6"/>
+      <text x="160" y="248" text-anchor="middle" font-family="'Playfair Display', serif" font-size="11" fill="#7a6e6a" letter-spacing="2" font-weight="700">GACHA</text>
+      <text x="160" y="265" text-anchor="middle" font-family="'Noto Sans JP', sans-serif" font-size="9" fill="#a8a098" letter-spacing="1">1 TURN</text>
+
+      <!-- Coin slot -->
+      <rect x="140" y="285" width="40" height="8" rx="4" fill="#d4cec9"/>
+      <rect x="156" y="281" width="8" height="16" rx="2" fill="#c4beba"/>
+
+      <!-- Handle -->
+      <circle cx="266" cy="250" r="18" fill="url(#handleGrad)" stroke="#c4beba" stroke-width="2"/>
+      <circle cx="266" cy="250" r="10" fill="#e8e2dd"/>
+      <circle cx="266" cy="250" r="5" fill="url(#handleCenter)"/>
+
+      <!-- Dispenser tray -->
+      <path d="M120,330 Q160,345 200,330" fill="none" stroke="#c4beba" stroke-width="3" stroke-linecap="round"/>
+
+      <!-- Defs -->
+      <defs>
+        <radialGradient id="globeGrad" cx="40%" cy="35%" r="65%">
+          <stop offset="0%" stop-color="#fff9f2"/>
+          <stop offset="100%" stop-color="#ede6df"/>
+        </radialGradient>
+        <radialGradient id="handleGrad" cx="35%" cy="30%" r="65%">
+          <stop offset="0%" stop-color="#f5f0eb"/>
+          <stop offset="100%" stop-color="#d4cec9"/>
+        </radialGradient>
+        <radialGradient id="handleCenter" cx="35%" cy="35%" r="65%">
+          <stop offset="0%" stop-color="#e8a08a"/>
+          <stop offset="100%" stop-color="#c47c63"/>
+        </radialGradient>
+      </defs>
+    </svg>
+
+    <div id="sold-out-overlay">SOLD OUT</div>
+    <div id="tap-hint">タップして回す</div>
+    <div id="cooldown-bar-wrap">
+      <div id="cooldown-bar"></div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="result-panel">
+    <div id="result-box">
+      <div id="result-label">—</div>
+      <div id="result-sub">result</div>
+    </div>
+    <div id="sold-out-badge">当たり終了</div>
+  </div>
+
+  <!-- STATS BAR -->
+  <div id="stats-bar">
+    <div class="stat-pill">
+      <div class="stat-label">回転数</div>
+      <div class="stat-value" id="stat-spins">0</div>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-label">残り回数</div>
+      <div class="stat-value" id="stat-remain">—</div>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-label">当たり</div>
+      <div class="stat-value" id="stat-wins">0</div>
+    </div>
+    <div class="stat-pill">
+      <div class="stat-label">残り在庫</div>
+      <div class="stat-value" id="stat-stock">—</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- PIN MODAL -->
+<div id="pin-overlay">
+  <div id="pin-panel">
+    <div id="pin-title">管理者認証</div>
+    <div id="pin-subtitle">Admin PIN Code</div>
+    <div id="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div id="pin-keypad">
+      <button class="pin-key" onclick="pinInput('1')">1</button>
+      <button class="pin-key" onclick="pinInput('2')">2</button>
+      <button class="pin-key" onclick="pinInput('3')">3</button>
+      <button class="pin-key" onclick="pinInput('4')">4</button>
+      <button class="pin-key" onclick="pinInput('5')">5</button>
+      <button class="pin-key" onclick="pinInput('6')">6</button>
+      <button class="pin-key" onclick="pinInput('7')">7</button>
+      <button class="pin-key" onclick="pinInput('8')">8</button>
+      <button class="pin-key" onclick="pinInput('9')">9</button>
+      <button class="pin-key del" onclick="pinDelete()">⌫</button>
+      <button class="pin-key zero" onclick="pinInput('0')">0</button>
+      <button class="pin-key del" onclick="pinClear()">C</button>
+    </div>
+    <div id="pin-error"></div>
+    <button id="pin-cancel" onclick="closePinModal()">キャンセル</button>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="admin-overlay">
+  <div id="admin-panel">
+    <div class="admin-header">
+      <div class="admin-title">⚙ 管理者設定</div>
+      <button id="admin-close" onclick="closeAdmin()">✕</button>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="admin-section">
+      <div class="admin-section-title">抽選設定</div>
+      <div class="field-row">
+        <label>当たり確率（1〜100%）</label>
+        <input type="number" id="input-prob" min="1" max="100" step="1" placeholder="例: 10">
+      </div>
+      <div class="field-row">
+        <label>くじ上限回数</label>
+        <input type="number" id="input-max-spins" min="1" step="1" placeholder="例: 100">
+      </div>
+      <div class="refill-row">
+        <div class="field-row">
+          <label>当たり在庫数</label>
+          <input type="number" id="input-stock" min="0" step="1" placeholder="例: 10">
+        </div>
+        <button class="btn-refill" onclick="refillStock()">補充 +</button>
+      </div>
+      <div class="field-row">
+        <label>補充数（+ボタン押下時）</label>
+        <input type="number" id="input-refill" min="1" step="1" value="10">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="saveSettings()">保存する</button>
+        <button class="btn btn-ghost" onclick="closeAdmin()">キャンセル</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="admin-section">
+      <div class="admin-section-title">本日の統計</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-label">総回転数</div>
+          <div class="stat-card-value" id="admin-spins">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">当たり数</div>
+          <div class="stat-card-value" id="admin-wins">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">上限回数</div>
+          <div class="stat-card-value" id="admin-max-spins">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">残り回数</div>
+          <div class="stat-card-value" id="admin-remain">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">残り在庫</div>
+          <div class="stat-card-value" id="admin-stock">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">設定確率</div>
+          <div class="stat-card-value" id="admin-prob">—</div>
+        </div>
+        <div class="stat-card highlight" style="grid-column: 1 / -1;">
+          <div class="stat-card-label">実績当たり率</div>
+          <div class="stat-card-value" id="admin-actual-rate">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PIN CHANGE -->
+    <div class="admin-section">
+      <div class="admin-section-title">PINコード変更</div>
+      <div class="field-row">
+        <label>新しいPINコード（4桁）</label>
+        <input type="number" id="input-new-pin" min="0" max="9999" step="1" placeholder="例: 1234">
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="changePin()">PINを変更</button>
+      </div>
+    </div>
+
+    <!-- RESET -->
+    <div class="admin-section">
+      <div class="admin-section-title">データ管理</div>
+      <div class="btn-row">
+        <button class="btn btn-danger" onclick="resetStats()">統計リセット</button>
+      </div>
+      <div class="admin-note">※ 翌日のイベント開始前に統計をリセットしてください。<br>設定（確率・在庫数）はリセットされません。</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================================
+//  STATE & STORAGE
+// =============================================
+const STORAGE_KEY = 'pinstudio_gacha_v1';
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return Object.assign({
+      prob: 0.1, stock: 10, spins: 0, wins: 0, pin: '1234', refillAmount: 10, maxSpins: 100
+    }, JSON.parse(raw));
+  } catch(e) {}
+  return { prob: 0.1, stock: 10, spins: 0, wins: 0, pin: '1234', refillAmount: 10, maxSpins: 100 };
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+let state = loadState();
+
+// =============================================
+//  LOGO TAP → PIN MODAL
+// =============================================
+let logoTaps = 0;
+let logoTimer = null;
+
+function handleLogoTap() {
+  logoTaps++;
+  if (logoTimer) clearTimeout(logoTimer);
+  logoTimer = setTimeout(() => { logoTaps = 0; }, 2000);
+  if (logoTaps >= 5) {
+    logoTaps = 0;
+    openPinModal();
+  }
+}
+
+// =============================================
+//  PIN MODAL
+// =============================================
+let pinBuffer = '';
+
+function openPinModal() {
+  pinBuffer = '';
+  updatePinDots();
+  document.getElementById('pin-error').textContent = '';
+  document.getElementById('pin-overlay').classList.add('open');
+}
+
+function closePinModal() {
+  pinBuffer = '';
+  document.getElementById('pin-overlay').classList.remove('open');
+}
+
+function pinInput(digit) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += digit;
+  updatePinDots();
+  if (pinBuffer.length === 4) {
+    setTimeout(checkPin, 120);
+  }
+}
+
+function pinDelete() {
+  pinBuffer = pinBuffer.slice(0, -1);
+  updatePinDots();
+}
+
+function pinClear() {
+  pinBuffer = '';
+  updatePinDots();
+  document.getElementById('pin-error').textContent = '';
+}
+
+function updatePinDots() {
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('pd' + i).classList.toggle('filled', i < pinBuffer.length);
+  }
+}
+
+function checkPin() {
+  if (pinBuffer === state.pin) {
+    closePinModal();
+    openAdmin();
+  } else {
+    document.getElementById('pin-error').textContent = 'PINが違います。もう一度お試しください。';
+    pinBuffer = '';
+    updatePinDots();
+    // shake animation
+    const panel = document.getElementById('pin-panel');
+    panel.style.animation = 'none';
+    panel.offsetWidth;
+    panel.style.animation = 'pinShake 0.35s ease';
+  }
+}
+
+// shake keyframe injection
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = `@keyframes pinShake {
+  0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}
+}`;
+document.head.appendChild(shakeStyle);
+
+// =============================================
+//  GACHA LOGIC
+// =============================================
+let isSpinning = false;
+
+function handleGachaTap() {
+  if (isSpinning) return;
+  if (state.stock <= 0) return; // SOLD OUT — hard block
+  if (state.spins >= state.maxSpins) return; // 回数上限 — hard block
+  spin();
+}
+
+function spin() {
+  isSpinning = true;
+
+  const capsule = document.getElementById('capsule-group');
+  const cx = 160, cy = 145;
+
+  const keyframes = [
+    { transform: `translate(${cx}px,${cy}px) rotate(0deg)   scale(1)    translate(${-cx}px,${-cy}px)` },
+    { transform: `translate(${cx}px,${cy}px) rotate(180deg) scale(1.10) translate(${-cx}px,${-cy}px)` },
+    { transform: `translate(${cx}px,${cy}px) rotate(360deg) scale(1)    translate(${-cx}px,${-cy}px)` },
+    { transform: `translate(${cx}px,${cy}px) rotate(350deg) scale(0.97) translate(${-cx}px,${-cy}px)` },
+    { transform: `translate(${cx}px,${cy}px) rotate(365deg) scale(1.02) translate(${-cx}px,${-cy}px)` },
+    { transform: `translate(${cx}px,${cy}px) rotate(358deg) scale(0.99) translate(${-cx}px,${-cy}px)` },
+    { transform: `translate(${cx}px,${cy}px) rotate(360deg) scale(1)    translate(${-cx}px,${-cy}px)` },
+  ];
+
+  const anim = capsule.animate(keyframes, {
+    duration: 1000, easing: 'ease-in-out', fill: 'forwards',
+  });
+
+  anim.onfinish = () => {
+    anim.cancel();
+    const won = determineResult();
+    showResult(won);
+    updateStats(won);
+    startCooldown(3);
+  };
+}
+
+function determineResult() {
+  if (state.stock <= 0) return false;
+  return Math.random() < state.prob;
+}
+
+function updateStats(won) {
+  state.spins++;
+  if (won) {
+    state.wins++;
+    state.stock = Math.max(0, state.stock - 1);
+  }
+  saveState();
+  renderStats();
+}
+
+// =============================================
+//  COOLDOWN (visual)
+// =============================================
+function startCooldown(seconds) {
+  const hint = document.getElementById('tap-hint');
+  const barWrap = document.getElementById('cooldown-bar-wrap');
+  const bar = document.getElementById('cooldown-bar');
+
+  barWrap.classList.add('active');
+  bar.style.transform = 'scaleX(1)';
+
+  let remaining = seconds;
+  hint.textContent = `お待ちください… ${remaining}`;
+
+  const startTime = Date.now();
+  const total = seconds * 1000;
+
+  function tick() {
+    const elapsed = Date.now() - startTime;
+    const progress = Math.min(elapsed / total, 1);
+    bar.style.transform = `scaleX(${1 - progress})`;
+
+    const secs = Math.ceil((total - elapsed) / 1000);
+    if (secs !== remaining) {
+      remaining = secs;
+      hint.textContent = remaining > 0 ? `お待ちください… ${remaining}` : 'タップして回す';
+    }
+
+    if (progress < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      bar.style.transform = 'scaleX(0)';
+      barWrap.classList.remove('active');
+      hint.textContent = 'タップして回す';
+      isSpinning = false;
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+// =============================================
+//  RESULT DISPLAY
+// =============================================
+function showResult(won) {
+  const box = document.getElementById('result-box');
+  const label = document.getElementById('result-label');
+  const sub = document.getElementById('result-sub');
+
+  box.classList.remove('win', 'lose', 'visible', 'win-flash');
+  void box.offsetWidth;
+
+  if (won) {
+    label.textContent = '🎉 当たり！';
+    sub.textContent = 'CONGRATULATIONS';
+    box.classList.add('win');
+    launchConfetti();
+    setTimeout(() => box.classList.add('win-flash'), 20);
+  } else {
+    label.textContent = 'はずれ…';
+    sub.textContent = 'TRY AGAIN';
+    box.classList.add('lose');
+  }
+  setTimeout(() => box.classList.add('visible'), 20);
+}
+
+// =============================================
+//  STATS RENDER
+// =============================================
+function renderStats() {
+  const limitReached = state.spins >= state.maxSpins;
+
+  // 回転数表示（残り回数も併記）
+  const spinsEl = document.getElementById('stat-spins');
+  spinsEl.textContent = state.spins;
+  spinsEl.className = 'stat-value' + (limitReached ? ' warn' : '');
+
+  // 残り回数
+  const remainEl = document.getElementById('stat-remain');
+  if (remainEl) {
+    remainEl.textContent = Math.max(0, state.maxSpins - state.spins);
+    remainEl.className = 'stat-value' + (limitReached ? ' warn' : '');
+  }
+
+  document.getElementById('stat-wins').textContent = state.wins;
+
+  const stockEl = document.getElementById('stat-stock');
+  stockEl.textContent = state.stock;
+  stockEl.className = 'stat-value' + (state.stock === 0 ? ' warn' : '');
+
+  // マシン停止状態の判定（在庫ゼロ OR 回数上限）
+  const soldOutOverlay = document.getElementById('sold-out-overlay');
+  const machineSvg = document.getElementById('machine-svg');
+  const tapHint = document.getElementById('tap-hint');
+
+  if (limitReached) {
+    soldOutOverlay.textContent = 'CLOSED';
+    soldOutOverlay.classList.add('visible');
+    machineSvg.classList.add('sold-out');
+    tapHint.textContent = 'くじは終了しました';
+  } else if (state.stock === 0) {
+    soldOutOverlay.textContent = 'SOLD OUT';
+    soldOutOverlay.classList.add('visible');
+    machineSvg.classList.add('sold-out');
+    tapHint.textContent = '当たりは終了しました';
+  } else {
+    soldOutOverlay.classList.remove('visible');
+    machineSvg.classList.remove('sold-out');
+    if (!isSpinning) tapHint.textContent = 'タップして回す';
+  }
+
+  // Legacy badge
+  const badge = document.getElementById('sold-out-badge');
+  if (badge) badge.classList.toggle('visible', state.stock === 0 || limitReached);
+
+  // Admin panel
+  document.getElementById('admin-spins').textContent = state.spins;
+  document.getElementById('admin-wins').textContent = state.wins;
+  document.getElementById('admin-stock').textContent = state.stock;
+  document.getElementById('admin-prob').textContent = Math.round(state.prob * 100) + '%';
+  const adminMaxSpins = document.getElementById('admin-max-spins');
+  if (adminMaxSpins) adminMaxSpins.textContent = state.maxSpins;
+  const adminRemain = document.getElementById('admin-remain');
+  if (adminRemain) adminRemain.textContent = Math.max(0, state.maxSpins - state.spins);
+
+  // 実績当たり率
+  const actualRate = state.spins > 0
+    ? Math.round((state.wins / state.spins) * 1000) / 10 + '%'
+    : '—';
+  document.getElementById('admin-actual-rate').textContent = actualRate;
+}
+
+// =============================================
+//  ADMIN PANEL
+// =============================================
+function openAdmin() {
+  document.getElementById('input-prob').value = Math.round(state.prob * 100);
+  document.getElementById('input-stock').value = state.stock;
+  document.getElementById('input-refill').value = state.refillAmount || 10;
+  document.getElementById('input-max-spins').value = state.maxSpins;
+  renderStats();
+  document.getElementById('admin-overlay').classList.add('open');
+}
+
+function closeAdmin() {
+  document.getElementById('admin-overlay').classList.remove('open');
+}
+
+function saveSettings() {
+  const probPct = parseInt(document.getElementById('input-prob').value);
+  const stock = parseInt(document.getElementById('input-stock').value);
+  const maxSpins = parseInt(document.getElementById('input-max-spins').value);
+
+  if (isNaN(probPct) || probPct < 1 || probPct > 100) {
+    alert('確率は 1〜100 の整数（%）で入力してください。');
+    return;
+  }
+  if (isNaN(stock) || stock < 0) {
+    alert('在庫数は0以上の整数を入力してください。');
+    return;
+  }
+  if (isNaN(maxSpins) || maxSpins < 1) {
+    alert('上限回数は1以上の整数を入力してください。');
+    return;
+  }
+
+  state.prob = probPct / 100;
+  state.stock = stock;
+  state.maxSpins = maxSpins;
+  state.refillAmount = parseInt(document.getElementById('input-refill').value) || 10;
+  saveState();
+  renderStats();
+  closeAdmin();
+}
+
+function refillStock() {
+  const amount = parseInt(document.getElementById('input-refill').value) || 10;
+  state.stock += amount;
+  document.getElementById('input-stock').value = state.stock;
+  saveState();
+  renderStats();
+}
+
+function changePin() {
+  const raw = document.getElementById('input-new-pin').value.trim();
+  const padded = raw.padStart(4, '0');
+  if (!/^\d{4}$/.test(padded)) {
+    alert('PINは4桁の数字で入力してください。');
+    return;
+  }
+  state.pin = padded;
+  saveState();
+  document.getElementById('input-new-pin').value = '';
+  alert(`PINを「${padded}」に変更しました。`);
+}
+
+function resetStats() {
+  if (!confirm('統計データ（回転数・当たり数）をリセットしますか？\n設定（確率・在庫数・PIN）は変更されません。')) return;
+  state.spins = 0;
+  state.wins = 0;
+  saveState();
+  renderStats();
+
+  const box = document.getElementById('result-box');
+  box.classList.remove('visible', 'win', 'lose');
+}
+
+// Close overlay on background tap
+document.getElementById('admin-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeAdmin();
+});
+document.getElementById('pin-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closePinModal();
+});
+
+// =============================================
+//  CONFETTI
+// =============================================
+const canvas = document.getElementById('confetti-canvas');
+const ctx = canvas.getContext('2d');
+let confettiParticles = [];
+let confettiRAF = null;
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+const COLORS = ['#e85d75','#d4a85a','#f0cf8a','#c47c63','#7ab8d4','#a8d4b0','#f5d898'];
+
+function launchConfetti() {
+  confettiParticles = [];
+  for (let i = 0; i < 120; i++) {
+    confettiParticles.push({
+      x: Math.random() * canvas.width,
+      y: -10 - Math.random() * 40,
+      r: 4 + Math.random() * 6,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      vx: (Math.random() - 0.5) * 4,
+      vy: 2 + Math.random() * 4,
+      rot: Math.random() * 360,
+      rotV: (Math.random() - 0.5) * 8,
+      shape: Math.random() > 0.5 ? 'rect' : 'circle',
+      opacity: 1,
+    });
+  }
+  if (confettiRAF) cancelAnimationFrame(confettiRAF);
+  animateConfetti();
+}
+
+function animateConfetti() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  confettiParticles = confettiParticles.filter(p => p.opacity > 0.01);
+
+  for (const p of confettiParticles) {
+    p.x += p.vx; p.y += p.vy; p.rot += p.rotV; p.vy += 0.08;
+    if (p.y > canvas.height * 0.7) p.opacity -= 0.025;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot * Math.PI / 180);
+    ctx.globalAlpha = p.opacity;
+    ctx.fillStyle = p.color;
+    if (p.shape === 'rect') {
+      ctx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r);
+    } else {
+      ctx.beginPath(); ctx.arc(0, 0, p.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  if (confettiParticles.length > 0) {
+    confettiRAF = requestAnimationFrame(animateConfetti);
+  } else {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
+// =============================================
+//  INIT
+// =============================================
+renderStats();
+</script>
+</body>
+</html>
